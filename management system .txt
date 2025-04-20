@@ -1,0 +1,104 @@
+import sqlite3
+
+# Connect to SQLite database (or create one)
+conn = sqlite3.connect('construction_projects.db')
+cursor = conn.cursor()
+
+# Create tables
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS Projects (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    start_date TEXT,
+    end_date TEXT,
+    status TEXT
+)
+''')
+
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS Tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id INTEGER,
+    description TEXT,
+    assigned_to TEXT,
+    status TEXT,
+    FOREIGN KEY(project_id) REFERENCES Projects(id)
+)
+''')
+
+conn.commit()
+
+# Functions
+def add_project(name, start_date, end_date):
+    cursor.execute('INSERT INTO Projects (name, start_date, end_date, status) VALUES (?, ?, ?, ?)',
+                   (name, start_date, end_date, 'Not Started'))
+    conn.commit()
+    print(f"Project '{name}' added successfully!")
+
+def add_task(project_id, description, assigned_to):
+    cursor.execute('INSERT INTO Tasks (project_id, description, assigned_to, status) VALUES (?, ?, ?, ?)',
+                   (project_id, description, assigned_to, 'Pending'))
+    conn.commit()
+    print("Task added successfully!")
+
+def update_task_status(task_id, status):
+    cursor.execute('UPDATE Tasks SET status = ? WHERE id = ?', (status, task_id))
+    conn.commit()
+    print("Task status updated!")
+
+def view_projects():
+    cursor.execute('SELECT * FROM Projects')
+    for project in cursor.fetchall():
+        print(project)
+
+def view_tasks(project_id):
+    cursor.execute('SELECT * FROM Tasks WHERE project_id = ?', (project_id,))
+    for task in cursor.fetchall():
+        print(task)
+
+# Sample Menu
+def main():
+    while True:
+        print("\n--- Construction Project Management ---")
+        print("1. Add New Project")
+        print("2. Add Task to Project")
+        print("3. Update Task Status")
+        print("4. View All Projects")
+        print("5. View Tasks for a Project")
+        print("6. Exit")
+
+        choice = input("Enter choice: ")
+
+        if choice == '1':
+            name = input("Project Name: ")
+            start = input("Start Date (YYYY-MM-DD): ")
+            end = input("End Date (YYYY-MM-DD): ")
+            add_project(name, start, end)
+
+        elif choice == '2':
+            pid = int(input("Project ID: "))
+            desc = input("Task Description: ")
+            assigned = input("Assigned To: ")
+            add_task(pid, desc, assigned)
+
+        elif choice == '3':
+            tid = int(input("Task ID: "))
+            status = input("New Status (Pending/In Progress/Completed): ")
+            update_task_status(tid, status)
+
+        elif choice == '4':
+            view_projects()
+
+        elif choice == '5':
+            pid = int(input("Project ID: "))
+            view_tasks(pid)
+
+        elif choice == '6':
+            print("Exiting Program...")
+            break
+
+        else:
+            print("Invalid choice, please try again!")
+
+if __name__ == '__main__':
+    main()
